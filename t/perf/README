@@ -99,14 +99,18 @@ You can set the following variables (also in your config.mak):
 	Boolean indicating whether to register test repo(s) with Scalar
 	before executing tests.
 
-You can also pass the options taken by ordinary git tests; the most
-useful one is:
+You can also pass the options (or set the environment variables) taken by
+ordinary git tests; the most useful one is:
 
 --root=<directory>::
 	Create "trash" directories used to store all temporary data during
 	testing under <directory>, instead of the t/ directory.
 	Using this option with a RAM-based filesystem (such as tmpfs)
 	can massively speed up the test suite.
+
+    TEST_SCRATCH_DIRECTORY
+	Equivalently, set this environment variable for the same effect.
+
 
 
 Naming Tests

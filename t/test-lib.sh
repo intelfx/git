@@ -118,6 +118,9 @@ fi
 if test -n "${TEST_OUTPUT_DIRECTORY_OVERRIDE}"
 then
 	TEST_OUTPUT_DIRECTORY="${TEST_OUTPUT_DIRECTORY_OVERRIDE}"
+	# Likewise, unset TEST_SCRATCH_DIRECTORY if it was set
+	# to force the trash directories under the path above
+	unset TEST_SCRATCH_DIRECTORY
 fi
 
 # Disallow the use of abbreviated options in the test suite by default
@@ -334,7 +337,11 @@ TEST_RESULTS_SAN_DIR_SFX=leak
 TEST_RESULTS_SAN_FILE=
 TEST_RESULTS_SAN_DIR="$TEST_RESULTS_BASE.$TEST_RESULTS_SAN_DIR_SFX"
 TRASH_DIRECTORY="trash directory.$TEST_NAME$TEST_STRESS_JOB_SFX"
-test -n "$root" && TRASH_DIRECTORY="$root/$TRASH_DIRECTORY"
+if test -n "$root"; then
+	TRASH_DIRECTORY="$root/$TRASH_DIRECTORY"
+elif test -n "$TEST_SCRATCH_DIRECTORY"; then
+	TRASH_DIRECTORY="$TEST_SCRATCH_DIRECTORY/$TRASH_DIRECTORY"
+fi
 case "$TRASH_DIRECTORY" in
 /*) ;; # absolute path is good
  *) TRASH_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$TRASH_DIRECTORY" ;;
