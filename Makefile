@@ -2276,7 +2276,7 @@ endif
 
 # Can adjust this to be a global directory if you want to do extended
 # data gathering
-PROFILE_DIR := $(CURDIR)
+PROFILE_DIR ?= $(CURDIR)
 
 ifeq ("$(PROFILE)","GEN")
 	BASIC_CFLAGS += -fprofile-generate=$(PROFILE_DIR) -DNO_NORETURN=1
