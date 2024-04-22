@@ -347,6 +347,11 @@ case "$TRASH_DIRECTORY" in
  *) TRASH_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$TRASH_DIRECTORY" ;;
 esac
 
+# Build and export a hierarchical test name, accounting for nested tests
+__TEST_NAME="${__TEST_PARENT}${TEST_NAME}"
+__TEST_PARENT="${__TEST_NAME}+"
+export __TEST_NAME __TEST_PARENT
+
 # If --stress was passed, run this test repeatedly in several parallel loops.
 if test "$GIT_TEST_STRESS_STARTED" = "done"
 then
