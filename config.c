@@ -239,11 +239,12 @@ static int prepare_include_condition_pattern(const struct key_value_info *kvi,
  * This function implements common logic for conditional include directives
  * that represent conditions on various repository paths:
  * - gitdir(/i):*
+ * - worktree(/i):*
  *
  * The `path` parameter holds the (resolved) repository path being examined;
  * the `cond` and `cond_len` parameters contain the pattern to match against.
  * The `icase` parameter specifies whether the matching should be case-insensitive
- * (gitdir/i).
+ * (gitdir/i, worktree/i).
  */
 static int include_by_path(const struct key_value_info *kvi,
 			   const char *path,
@@ -304,6 +305,15 @@ static int include_by_gitdir(const struct key_value_info *kvi,
 {
 	if (opts->git_dir)
 		return include_by_path(kvi, opts->git_dir, cond, cond_len, icase);
+	return 0;
+}
+
+static int include_by_worktree(const struct key_value_info *kvi,
+			       const struct config_options *opts,
+			       const char *cond, size_t cond_len, int icase)
+{
+	if (opts->worktree)
+		return include_by_path(kvi, opts->worktree, cond, cond_len, icase);
 	return 0;
 }
 
@@ -416,6 +426,10 @@ static int include_condition_is_true(const struct key_value_info *kvi,
 		return include_by_gitdir(kvi, opts, cond, cond_len, 0);
 	else if (skip_prefix_mem(cond, cond_len, "gitdir/i:", &cond, &cond_len))
 		return include_by_gitdir(kvi, opts, cond, cond_len, 1);
+	else if (skip_prefix_mem(cond, cond_len, "worktree:", &cond, &cond_len))
+		return include_by_worktree(kvi, opts, cond, cond_len, 0);
+	else if (skip_prefix_mem(cond, cond_len, "worktree/i:", &cond, &cond_len))
+		return include_by_worktree(kvi, opts, cond, cond_len, 1);
 	else if (skip_prefix_mem(cond, cond_len, "onbranch:", &cond, &cond_len))
 		return include_by_branch(inc, cond, cond_len);
 	else if (skip_prefix_mem(cond, cond_len, "hasconfig:remote.*.url:", &cond,

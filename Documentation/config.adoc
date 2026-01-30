@@ -146,6 +146,13 @@ refer to linkgit:gitignore[5] for details. For convenience:
 	This is the same as `gitdir` except that matching is done
 	case-insensitively (e.g. on case-insensitive file systems)
 
+`worktree`::
+	Analogous to `gitdir`, but the pattern provided is matched
+	against the top-level directory of the working tree.
+
+`worktree/i`::
+	Same as `worktree`, except that matching is done case-insensitively.
+
 `onbranch`::
 	The data that follows the keyword `onbranch` and a colon is taken to be a
 	pattern with standard globbing wildcards and two additional

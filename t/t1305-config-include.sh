@@ -229,6 +229,38 @@ test_expect_success 'conditional include, early config reading' '
 	)
 '
 
+test_expect_success 'conditional include via main worktree' '
+	(
+		cd foo &&
+		git worktree add ../xbar &&
+		echo "[includeIf \"worktree:foo\"]path=bar7.1" >>.git/config &&
+		echo "[includeIf \"worktree:xbar\"]path=bar7.2" >>.git/config &&
+		echo "[test]seven=7.1" >.git/bar7.1 &&
+		echo "[test]seven=7.2" >.git/bar7.2 &&
+		echo 7.1 >expect &&
+		git config test.seven >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'conditional include via additional worktree' '
+	(
+		cd xbar &&
+		echo 7.2 >expect &&
+		git config test.seven >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'conditional include via additional worktree, early config reading' '
+	(
+		cd xbar &&
+		echo 7.2 >expect &&
+		test-tool config read_early_config test.seven >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'conditional include with /**/' '
 	REPO=foo/bar/repo &&
 	git init $REPO &&
