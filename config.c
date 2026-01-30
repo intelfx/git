@@ -1682,6 +1682,8 @@ void read_early_config(struct repository *repo, config_fn_t cb, void *data)
 		opts.commondir = repo_get_common_dir(repo);
 		opts.git_dir = repo_get_git_dir(repo);
 		opts.worktree = repo_get_work_tree(repo);
+		error("XXX: read_early_config() -> repo!=NULL: commondir=%s, git_dir=%s, worktree=%s",
+		      opts.commondir, opts.git_dir, opts.worktree);
 	/*
 	 * When setup_git_directory() was not yet asked to discover the
 	 * GIT_DIR, we ask discover_git_directory() to figure out whether there
@@ -1694,6 +1696,8 @@ void read_early_config(struct repository *repo, config_fn_t cb, void *data)
 		opts.commondir = commondir.buf;
 		opts.git_dir = gitdir.buf;
 		opts.worktree = worktree.buf;
+		error("XXX: read_early_config() -> discover_git_directory(): commondir=%s, git_dir=%s, worktree=%s",
+		      opts.commondir, opts.git_dir, opts.worktree);
 	}
 
 	config_with_options(cb, data, NULL, NULL, &opts);
@@ -2282,6 +2286,8 @@ static void repo_read_config(struct repository *repo)
 	opts.commondir = repo->commondir;
 	opts.git_dir = repo->gitdir;
 	opts.worktree = repo->worktree;
+	error("XXX: repo_read_config(): commondir=%s, git_dir=%s, worktree=%s",
+	      opts.commondir, opts.git_dir, opts.worktree);
 
 	if (!repo->config)
 		CALLOC_ARRAY(repo->config, 1);

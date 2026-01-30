@@ -825,6 +825,8 @@ static void location_options_init(struct config_location_options *opts,
 		opts->options.commondir = repo_get_common_dir(the_repository);
 		opts->options.git_dir = repo_get_git_dir(the_repository);
 		opts->options.worktree = repo_get_work_tree(the_repository);
+		error("XXX: location_options_init(): commondir=%s, git_dir=%s, worktree=%s",
+		      opts->options.commondir, opts->options.git_dir, opts->options.worktree);
 	}
 }
 
