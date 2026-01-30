@@ -102,6 +102,7 @@ struct config_options {
 
 	const char *commondir;
 	const char *git_dir;
+	const char *worktree;
 	/*
 	 * event_fn and event_fn_data are for internal use only. Handles events
 	 * emitted by the config parser.

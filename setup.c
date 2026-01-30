@@ -1576,11 +1576,13 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 }
 
 enum discovery_result discover_git_directory_reason(struct strbuf *commondir,
-						    struct strbuf *gitdir)
+						    struct strbuf *gitdir,
+						    struct strbuf *worktree)
 {
 	struct strbuf dir = STRBUF_INIT, err = STRBUF_INIT;
 	size_t gitdir_offset = gitdir->len, cwd_len;
 	size_t commondir_offset = commondir->len;
+	size_t worktree_offset = worktree->len;
 	struct repository_format candidate = REPOSITORY_FORMAT_INIT;
 	enum discovery_result result;
 
@@ -1593,6 +1595,15 @@ enum discovery_result discover_git_directory_reason(struct strbuf *commondir,
 		strbuf_release(&dir);
 		return result;
 	}
+
+	/*
+	 * Preserve the unmodified worktree path as returned
+	 * (setup_git_directory_gently sets dir to the toplevel directory
+	 * containing gitdir or gitlink, which is exactly what we want, unless
+	 * we found a bare repository).
+	 */
+	if (result != GIT_DIR_BARE)
+		strbuf_addbuf(worktree, &dir);
 
 	/*
 	 * The returned gitdir is relative to dir, and if dir does not reflect
@@ -1620,6 +1631,7 @@ enum discovery_result discover_git_directory_reason(struct strbuf *commondir,
 		strbuf_release(&err);
 		strbuf_setlen(commondir, commondir_offset);
 		strbuf_setlen(gitdir, gitdir_offset);
+		strbuf_setlen(worktree, worktree_offset);
 		clear_repository_format(&candidate);
 		return GIT_DIR_INVALID_FORMAT;
 	}

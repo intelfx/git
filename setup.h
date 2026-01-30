@@ -76,7 +76,8 @@ enum discovery_result {
 	GIT_DIR_CWD_FAILURE = -7,
 };
 enum discovery_result discover_git_directory_reason(struct strbuf *commondir,
-						    struct strbuf *gitdir);
+						    struct strbuf *gitdir,
+						    struct strbuf *worktree);
 
 /*
  * Find the commondir and gitdir of the repository that contains the current
@@ -87,9 +88,10 @@ enum discovery_result discover_git_directory_reason(struct strbuf *commondir,
  * either 0 upon success and -1 if no repository was found.
  */
 static inline int discover_git_directory(struct strbuf *commondir,
-					 struct strbuf *gitdir)
+					 struct strbuf *gitdir,
+					 struct strbuf *worktree)
 {
-	if (discover_git_directory_reason(commondir, gitdir) <= 0)
+	if (discover_git_directory_reason(commondir, gitdir, worktree) <= 0)
 		return -1;
 	return 0;
 }

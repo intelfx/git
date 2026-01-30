@@ -687,7 +687,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 	};
 	struct string_list scalar_repos = STRING_LIST_INIT_DUP;
 	int res = 0;
-	struct strbuf commondir = STRBUF_INIT, gitdir = STRBUF_INIT;
+	struct strbuf commondir = STRBUF_INIT, gitdir = STRBUF_INIT, worktree = STRBUF_INIT;
 
 	argc = parse_options(argc, argv, NULL, options,
 			     usage, 0);
@@ -723,6 +723,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 
 		strbuf_reset(&commondir);
 		strbuf_reset(&gitdir);
+		strbuf_reset(&worktree);
 
 		if (chdir(dir) < 0) {
 			struct strbuf buf = STRBUF_INIT;
@@ -745,7 +746,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 			goto loop_end;
 		}
 
-		switch (discover_git_directory_reason(&commondir, &gitdir)) {
+		switch (discover_git_directory_reason(&commondir, &gitdir, &worktree)) {
 		case GIT_DIR_INVALID_OWNERSHIP:
 			warning(_("repository at '%s' has different owner"), dir);
 			goto loop_end;
@@ -794,6 +795,7 @@ loop_end:
 	string_list_clear(&scalar_repos, 1);
 	strbuf_release(&commondir);
 	strbuf_release(&gitdir);
+	strbuf_release(&worktree);
 
 	return res;
 }

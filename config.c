@@ -1660,12 +1660,14 @@ void read_early_config(struct repository *repo, config_fn_t cb, void *data)
 	struct config_options opts = {0};
 	struct strbuf commondir = STRBUF_INIT;
 	struct strbuf gitdir = STRBUF_INIT;
+	struct strbuf worktree = STRBUF_INIT;
 
 	opts.respect_includes = 1;
 
 	if (repo && repo->gitdir) {
 		opts.commondir = repo_get_common_dir(repo);
 		opts.git_dir = repo_get_git_dir(repo);
+		opts.worktree = repo_get_work_tree(repo);
 	/*
 	 * When setup_git_directory() was not yet asked to discover the
 	 * GIT_DIR, we ask discover_git_directory() to figure out whether there
@@ -1674,15 +1676,17 @@ void read_early_config(struct repository *repo, config_fn_t cb, void *data)
 	 * notably, the current working directory is still the same after the
 	 * call).
 	 */
-	} else if (!discover_git_directory(&commondir, &gitdir)) {
+	} else if (!discover_git_directory(&commondir, &gitdir, &worktree)) {
 		opts.commondir = commondir.buf;
 		opts.git_dir = gitdir.buf;
+		opts.worktree = worktree.buf;
 	}
 
 	config_with_options(cb, data, NULL, NULL, &opts);
 
 	strbuf_release(&commondir);
 	strbuf_release(&gitdir);
+	strbuf_release(&worktree);
 }
 
 void read_very_early_config(config_fn_t cb, void *data)
@@ -2263,6 +2267,7 @@ static void repo_read_config(struct repository *repo)
 	opts.respect_includes = 1;
 	opts.commondir = repo->commondir;
 	opts.git_dir = repo->gitdir;
+	opts.worktree = repo->worktree;
 
 	if (!repo->config)
 		CALLOC_ARRAY(repo->config, 1);

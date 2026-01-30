@@ -824,6 +824,7 @@ static void location_options_init(struct config_location_options *opts,
 	if (startup_info->have_repository) {
 		opts->options.commondir = repo_get_common_dir(the_repository);
 		opts->options.git_dir = repo_get_git_dir(the_repository);
+		opts->options.worktree = repo_get_work_tree(the_repository);
 	}
 }
 
