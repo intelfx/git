@@ -235,23 +235,27 @@ static int prepare_include_condition_pattern(const struct key_value_info *kvi,
 	return 0;
 }
 
-static int include_by_gitdir(const struct key_value_info *kvi,
-			     const struct config_options *opts,
-			     const char *cond, size_t cond_len, int icase)
+/*
+ * This function implements common logic for conditional include directives
+ * that represent conditions on various repository paths:
+ * - gitdir(/i):*
+ *
+ * The `path` parameter holds the (resolved) repository path being examined;
+ * the `cond` and `cond_len` parameters contain the pattern to match against.
+ * The `icase` parameter specifies whether the matching should be case-insensitive
+ * (gitdir/i).
+ */
+static int include_by_path(const struct key_value_info *kvi,
+			   const char *path,
+			   const char *cond, size_t cond_len, int icase)
 {
 	struct strbuf text = STRBUF_INIT;
 	struct strbuf pattern = STRBUF_INIT;
 	size_t prefix;
 	int ret = 0;
-	const char *git_dir;
 	int already_tried_absolute = 0;
 
-	if (opts->git_dir)
-		git_dir = opts->git_dir;
-	else
-		goto done;
-
-	strbuf_realpath(&text, git_dir, 1);
+	strbuf_realpath(&text, path, 1);
 	strbuf_add(&pattern, cond, cond_len);
 	ret = prepare_include_condition_pattern(kvi, &pattern, &prefix);
 	if (ret < 0)
@@ -284,7 +288,7 @@ again:
 		 * which'll do the right thing
 		 */
 		strbuf_reset(&text);
-		strbuf_add_absolute_path(&text, git_dir);
+		strbuf_add_absolute_path(&text, path);
 		already_tried_absolute = 1;
 		goto again;
 	}
@@ -292,6 +296,15 @@ done:
 	strbuf_release(&pattern);
 	strbuf_release(&text);
 	return ret;
+}
+
+static int include_by_gitdir(const struct key_value_info *kvi,
+			     const struct config_options *opts,
+			     const char *cond, size_t cond_len, int icase)
+{
+	if (opts->git_dir)
+		return include_by_path(kvi, opts->git_dir, cond, cond_len, icase);
+	return 0;
 }
 
 static int include_by_branch(struct config_include_data *data,
