@@ -490,20 +490,83 @@ test_expect_success 'conditional include, worktree, icase' '
 	)
 '
 
-# The "worktree" condition cannot match during early config reading
-# because the repository object is not yet fully initialized and
-# repo_get_work_tree() returns NULL.
-test_expect_success 'conditional include, worktree does not match in early config' '
-	git init wt-early &&
+# Verify that the "worktree" condition gives the same result during early
+# config reading (before the repository is set up) as it does afterwards.
+test_worktree_early () {
+	expect=$1 &&
+	shift &&
+	echo "$expect" >expect &&
 	(
-		cd wt-early &&
-		test_commit initial &&
-		wt_path="$(pwd)" &&
-		echo "[includeIf \"worktree:$wt_path\"]path=early-inc" >>.git/config &&
-		echo "[test]wtearly=1" >.git/early-inc &&
+		cd "$1" &&
+		shift &&
+		env "$@" git config test.wtearly >"$TRASH_DIRECTORY/actual" &&
+		env "$@" test-tool config read_early_config test.wtearly \
+			>"$TRASH_DIRECTORY/actual-early"
+	) &&
+	test_cmp expect actual &&
+	test_cmp expect actual-early
+}
+
+test_expect_success 'conditional include, worktree, early config reading' '
+	git init wt-early &&
+	test_commit -C wt-early initial &&
+	git -C wt-early worktree add ../wt-early-linked &&
+	mkdir wt-early/sub wt-early-other &&
+	git init wt-early-abs &&
+	git init wt-early-rel &&
+	git init --bare wt-early-bare &&
+	git init --separate-git-dir="$(pwd)/wt-early-sep.git" wt-early-sep &&
+	wt_main="$(pwd)/wt-early" &&
+	wt_linked="$(pwd)/wt-early-linked" &&
+	wt_other="$(pwd)/wt-early-other" &&
+	git -C wt-early-abs config core.worktree "$wt_other" &&
+	git -C wt-early-rel config core.worktree ../../wt-early-other &&
+	git -C wt-early-sep config core.worktree ../wt-early-other &&
+
+	test_when_finished "rm -f .gitconfig" &&
+	cat >.gitconfig <<-EOF &&
+	[includeIf "worktree:$wt_main"]
+		path = wt-early-main.inc
+	[includeIf "worktree:$wt_linked"]
+		path = wt-early-linked.inc
+	[includeIf "worktree:$wt_other"]
+		path = wt-early-other.inc
+	EOF
+	echo "[test]wtearly=main" >wt-early-main.inc &&
+	echo "[test]wtearly=linked" >wt-early-linked.inc &&
+	echo "[test]wtearly=other" >wt-early-other.inc &&
+
+	test_worktree_early main wt-early &&
+	test_worktree_early main wt-early/sub &&
+	test_worktree_early linked wt-early-linked &&
+	test_worktree_early other wt-early-other GIT_DIR="$wt_main/.git" &&
+	test_worktree_early main wt-early-other \
+		GIT_DIR="$wt_main/.git" GIT_WORK_TREE="$wt_main" &&
+	test_worktree_early main wt-early/sub \
+		GIT_DIR="$wt_main/.git" GIT_WORK_TREE="$wt_main" &&
+	test_worktree_early other wt-early-abs &&
+	test_worktree_early other wt-early-rel &&
+	test_worktree_early other wt-early GIT_DIR="$(pwd)/wt-early-sep/.git" &&
+	test_worktree_early other wt-early-bare GIT_WORK_TREE="$wt_other" &&
+	(
+		cd wt-early-bare &&
+		test_must_fail git config test.wtearly &&
 		test-tool config read_early_config test.wtearly >actual &&
 		test_must_be_empty actual
 	)
+'
+
+test_expect_success 'conditional include, worktree, aliases' '
+	test_when_finished "rm -f .gitconfig" &&
+	cat >.gitconfig <<-EOF &&
+	[includeIf "worktree:$(pwd)/wt-early-linked"]
+		path = wt-early-alias.inc
+	EOF
+	echo "[alias]wtalias=!echo linked" >wt-early-alias.inc &&
+	echo linked >expect &&
+	git -C wt-early-linked wtalias >actual &&
+	test_cmp expect actual &&
+	test_must_fail git -C wt-early wtalias
 '
 
 # Use a loose pattern so the "present in non-worktree cases" check works
