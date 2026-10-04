@@ -1742,6 +1742,17 @@ enum discovery_result discover_git_directory_reason(struct strbuf *commondir,
 		return result;
 	}
 
+	/* $GIT_DIR may point to a gitfile */
+	if (result == GIT_DIR_EXPLICIT) {
+		int error_code;
+		const char *path = read_gitfile_gently(gitdir->buf + gitdir_offset,
+						       &error_code);
+		if (path) {
+			strbuf_setlen(gitdir, gitdir_offset);
+			strbuf_addstr(gitdir, path);
+		}
+	}
+
 	/*
 	 * The returned gitdir is relative to dir, and if dir does not reflect
 	 * the current working directory, we simply make the gitdir absolute.

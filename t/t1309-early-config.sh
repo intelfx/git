@@ -65,6 +65,24 @@ test_expect_success 'read config file in right order' '
 	)
 '
 
+test_expect_success 'GIT_DIR pointing to a gitfile' '
+	git init --separate-git-dir="$PWD/gitfile-repo.git" gitfile &&
+	cat >>gitfile-repo.git/config <<-EOF &&
+	[early]
+		config = repo
+	[includeIf "gitdir:$PWD/gitfile-repo.git"]
+		path = gitdir.inc
+	EOF
+	echo "[early]config = gitdir" >gitfile-repo.git/gitdir.inc &&
+	GIT_DIR="$PWD/gitfile/.git" test-tool config \
+		read_early_config early.config >actual &&
+	cat >expected <<-\EOF &&
+	repo
+	gitdir
+	EOF
+	test_cmp expected actual
+'
+
 test_with_config () {
 	rm -rf throwaway &&
 	git init throwaway &&
