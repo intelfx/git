@@ -1703,7 +1703,7 @@ void read_early_config(struct repository *repo, config_fn_t cb, void *data)
 	 * notably, the current working directory is still the same after the
 	 * call).
 	 */
-	} else if (!discover_git_directory(&commondir, &gitdir)) {
+	} else if (!discover_git_directory(&commondir, &gitdir, NULL)) {
 		opts.commondir = commondir.buf;
 		opts.git_dir = gitdir.buf;
 	}

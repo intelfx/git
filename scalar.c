@@ -754,7 +754,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 			goto loop_end;
 		}
 
-		switch (discover_git_directory_reason(&commondir, &gitdir)) {
+		switch (discover_git_directory_reason(&commondir, &gitdir, NULL)) {
 		case GIT_DIR_INVALID_OWNERSHIP:
 			warning(_("repository at '%s' has different owner"), dir);
 			goto loop_end;

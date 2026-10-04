@@ -1723,10 +1723,50 @@ static enum discovery_result repo_discovery_find_dir(struct strbuf *dir,
 	}
 }
 
-enum discovery_result discover_git_directory_reason(struct strbuf *commondir,
-						    struct strbuf *gitdir)
+/*
+ * Determine the worktree of a repository found by repo_discovery_find_dir()
+ * the same way repo_discover() does, but without changing the working
+ * directory or the environment. `dir` and `gitdir` are as returned by
+ * repo_discovery_find_dir(), except that `gitdir` must be either absolute
+ * or relative to the current working directory.
+ */
+static void discover_worktree(struct strbuf *worktree,
+			      enum discovery_result result,
+			      const struct repository_format *format,
+			      const char *dir, const char *gitdir)
 {
-	struct strbuf dir = STRBUF_INIT, err = STRBUF_INIT;
+	const char *work_tree_env = getenv(GIT_WORK_TREE_ENVIRONMENT);
+	struct strbuf path = STRBUF_INIT, resolved = STRBUF_INIT;
+
+	if (work_tree_env) {
+		strbuf_addstr(&path, work_tree_env);
+	} else if (format->is_bare > 0) {
+		return;
+	} else if (format->work_tree) {
+		if (!is_absolute_path(format->work_tree))
+			strbuf_addf(&path, "%s/", gitdir);
+		strbuf_addstr(&path, format->work_tree);
+	} else if (result == GIT_DIR_EXPLICIT) {
+		if (!git_env_bool(GIT_IMPLICIT_WORK_TREE_ENVIRONMENT, 1))
+			return;
+		strbuf_addstr(&path, ".");
+	} else if (result == GIT_DIR_DISCOVERED) {
+		strbuf_addstr(&path, dir);
+	} else {
+		return;
+	}
+
+	if (strbuf_realpath(&resolved, path.buf, 0))
+		strbuf_addbuf(worktree, &resolved);
+	strbuf_release(&resolved);
+	strbuf_release(&path);
+}
+
+enum discovery_result discover_git_directory_reason(struct strbuf *commondir,
+						    struct strbuf *gitdir,
+						    struct strbuf *worktree)
+{
+	struct strbuf dir = STRBUF_INIT, config = STRBUF_INIT, err = STRBUF_INIT;
 	size_t gitdir_offset = gitdir->len, cwd_len;
 	size_t commondir_offset = commondir->len;
 	struct repository_format candidate = REPOSITORY_FORMAT_INIT;
@@ -1768,21 +1808,26 @@ enum discovery_result discover_git_directory_reason(struct strbuf *commondir,
 
 	get_common_dir(commondir, gitdir->buf + gitdir_offset);
 
-	strbuf_reset(&dir);
-	strbuf_addf(&dir, "%s/config", commondir->buf + commondir_offset);
-	read_repository_format(&candidate, dir.buf);
-	strbuf_release(&dir);
+	strbuf_addf(&config, "%s/config", commondir->buf + commondir_offset);
+	read_repository_format(&candidate, config.buf);
+	strbuf_release(&config);
 
 	if (verify_repository_format(&candidate, &err) < 0) {
 		warning("ignoring git dir '%s': %s",
 			gitdir->buf + gitdir_offset, err.buf);
 		strbuf_release(&err);
+		strbuf_release(&dir);
 		strbuf_setlen(commondir, commondir_offset);
 		strbuf_setlen(gitdir, gitdir_offset);
 		clear_repository_format(&candidate);
 		return GIT_DIR_INVALID_FORMAT;
 	}
 
+	if (worktree)
+		discover_worktree(worktree, result, &candidate, dir.buf,
+				  gitdir->buf + gitdir_offset);
+
+	strbuf_release(&dir);
 	clear_repository_format(&candidate);
 	return result;
 }

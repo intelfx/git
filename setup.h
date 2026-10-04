@@ -79,20 +79,23 @@ enum discovery_result {
 	GIT_DIR_CWD_FAILURE = -7,
 };
 enum discovery_result discover_git_directory_reason(struct strbuf *commondir,
-						    struct strbuf *gitdir);
+						    struct strbuf *gitdir,
+						    struct strbuf *worktree);
 
 /*
  * Find the commondir and gitdir of the repository that contains the current
  * working directory, without changing the working directory or other global
  * state. The result is appended to commondir and gitdir.  If the discovered
  * gitdir does not correspond to a worktree, then 'commondir' and 'gitdir' will
- * both have the same result appended to the buffer.  The return value is
- * either 0 upon success and -1 if no repository was found.
+ * both have the same result appended to the buffer.  If 'worktree' is not
+ * NULL, the absolute path of the worktree, if any, is appended to it.  The
+ * return value is either 0 upon success and -1 if no repository was found.
  */
 static inline int discover_git_directory(struct strbuf *commondir,
-					 struct strbuf *gitdir)
+					 struct strbuf *gitdir,
+					 struct strbuf *worktree)
 {
-	if (discover_git_directory_reason(commondir, gitdir) <= 0)
+	if (discover_git_directory_reason(commondir, gitdir, worktree) <= 0)
 		return -1;
 	return 0;
 }
